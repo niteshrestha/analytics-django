@@ -1,5 +1,6 @@
 import datetime
 import json
+from datetime import date
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
@@ -64,7 +65,14 @@ def add_page_visit(request):
 
 def get_page_visit(request):
     try:
-        visits = Visit.objects.all()
+        domain = request.data.get('domain')
+        start_date = date.fromisoformat(request.data.get('startDate'))
+        end_date = date.fromisoformat(request.data.get('endDate'))
+        visits = Visit.objects.filter(
+            year__range=(start_date.year, end_date.year),
+            month__range=(start_date.month, end_date.month),
+            day__range=(start_date.day, end_date.day),
+            domain=domain)
         serializer = VisitSerializer(visits, many=True)
         data = serializer.data
         for item in data:
