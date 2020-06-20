@@ -1,10 +1,11 @@
+"""
+API Views
+"""
 import datetime
 import json
 from datetime import date
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse
-from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -21,8 +22,10 @@ def greeter(request):
             return add_page_visit(request)
         elif request.method == 'GET':
             return get_page_visit(request)
-    except ValueError as e:
-        return Response(e.args[0], status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(None, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+    except ValueError as ex:
+        return Response(ex.args[0], status.HTTP_400_BAD_REQUEST)
 
 
 def add_page_visit(request):
@@ -34,33 +37,33 @@ def add_page_visit(request):
         domain = request.data.get('domain')
         page = request.data.get('page')
         try:
-            v = Visit.objects.get(
+            visit_object = Visit.objects.get(
                 domain=domain, year=year, month=month, day=day)
-            details = json.loads(v.details)
-            detailsUpdated = False
+            details = json.loads(visit_object.details)
+            details_updated = False
             for item in details:
                 if item['page'] == page:
                     item['count'] += 1
-                    detailsUpdated = True
-            if not detailsUpdated:
+                    details_updated = True
+            if not details_updated:
                 details.append({'page': page, 'count': 1})
-            v.details = json.dumps(
+            visit_object.details = json.dumps(
                 details, default=lambda o: o.__dict__)
-            v.save()
+            visit_object.save()
         except ObjectDoesNotExist:
-            visitObject = Visit()
-            visitObject.domain = domain
-            visitObject.year = year
-            visitObject.month = month
-            visitObject.day = day
+            visit_object = Visit()
+            visit_object.domain = domain
+            visit_object.year = year
+            visit_object.month = month
+            visit_object.day = day
             detail = [Details(page, 1)]
-            visitObject.details = json.dumps(
+            visit_object.details = json.dumps(
                 detail, default=lambda o: o.__dict__)
-            visitObject.save()
+            visit_object.save()
 
         return Response(None, status.HTTP_201_CREATED)
-    except ValueError as e:
-        return Response(e.args[0], status.HTTP_400_BAD_REQUEST)
+    except ValueError as ex:
+        return Response(ex.args[0], status.HTTP_400_BAD_REQUEST)
 
 
 def get_page_visit(request):
@@ -78,5 +81,5 @@ def get_page_visit(request):
         for item in data:
             item['details'] = json.loads(item['details'])
         return Response(serializer.data, status.HTTP_200_OK)
-    except ValueError as e:
-        return Response(e.args[0], status.HTTP_400_BAD_REQUEST)
+    except ValueError as ex:
+        return Response(ex.args[0], status.HTTP_400_BAD_REQUEST)

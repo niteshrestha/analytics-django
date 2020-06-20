@@ -1,2 +1,2 @@
 # analytics-django
-Analytics services for my website and blog written in python Django
+Analytics services for my website and blog written in python django.
